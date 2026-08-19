@@ -2,7 +2,7 @@
 
 > 먹이를 먹을수록 뱀이 길어진다! 벽과 자신의 몸을 피하며 최고 점수에 도전하는 클래식 스네이크 게임.
 
-**▶ 지금 바로 플레이** → [https://mindweaver74.github.io/snake](https://mindweaver74.github.io/snake)
+**▶ 지금 바로 플레이** → [https://mindweaver74.github.io/snake/](https://mindweaver74.github.io/snake/)
 
 ---
 
