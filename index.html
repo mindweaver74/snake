@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="방향키 또는 스와이프로 뱀을 조종해 먹이를 먹고 최고 점수에 도전!">
+<meta property="og:title" content="🐍 뱀 키우기 — 스네이크 게임">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mindweaver74.github.io/snake">
+<link rel="canonical" href="https://mindweaver74.github.io/snake">
+<title>🐍 뱀 키우기</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8357338943233901" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;background:#e8f0fe;font-family:-apple-system,Arial,sans-serif;}
+
+#wrap{position:fixed;top:0;left:0;width:100%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:max(8px,env(safe-area-inset-top)) 12px max(8px,env(safe-area-inset-bottom));}
+
+/* 상단 정보 */
+#top-bar{width:100%;max-width:420px;display:flex;justify-content:space-between;
+  align-items:center;margin-bottom:8px;gap:8px;}
+.score-box{flex:1;background:#fff;border:1px solid rgba(100,130,200,0.2);
+  border-radius:10px;padding:6px 10px;text-align:center;}
+.score-lbl{font-size:9px;color:rgba(80,100,160,0.6);letter-spacing:1px;}
+.score-val{font-size:20px;font-weight:900;color:#1a2a5e;}
+#best-val{color:#ffd700;}
+#len-val{color:#2ecc71;}
+
+/* 게임 캔버스 영역 */
+#board-wrap{width:100%;max-width:420px;position:relative;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 4px 20px rgba(100,130,200,0.2),0 0 0 1px rgba(100,130,200,0.15);}
+#gc{display:block;width:100%;}
+
+/* 하단 정보 */
+#bot-bar{width:100%;max-width:420px;display:flex;justify-content:space-between;
+  align-items:center;margin-top:8px;gap:8px;}
+.bot-box{flex:1;background:#fff;border:1px solid rgba(100,130,200,0.15);border-radius:8px;
+  padding:5px 8px;text-align:center;font-size:11px;color:rgba(80,100,160,0.6);}
+.bot-val{font-size:13px;font-weight:700;color:#1a2a5e;}
+
+/* 방향 버튼 */
+#dpad{width:100%;max-width:420px;display:grid;
+  grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;
+  gap:6px;margin-top:8px;height:150px;}
+.dpad-btn{border:none;border-radius:12px;font-size:22px;cursor:pointer;
+  background:#fff;border:1px solid rgba(100,130,200,0.25);
+  color:#1a2a5e;-webkit-appearance:none;transition:transform .08s,background .08s;}
+.dpad-btn:active,.dpad-btn.pressed{transform:scale(0.9);background:#dce8ff;}
+#d-up{grid-column:2;grid-row:1;}
+#d-left{grid-column:1;grid-row:2;}
+#d-center{grid-column:2;grid-row:2;font-size:13px;font-weight:700;
+  background:#e8fff4;border-color:rgba(46,204,113,0.5);color:#27ae60;}
+#d-right{grid-column:3;grid-row:2;}
+#d-down{grid-column:2;grid-row:3;}
+
+/* 오버레이 */
+#overlay{position:absolute;inset:0;background:rgba(240,244,255,0.95);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:10;border-radius:14px;}
+.ov-title{font-size:28px;font-weight:900;
+  background:linear-gradient(135deg,#2ecc71,#4af);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-bottom:4px;}
+.ov-score{font-size:52px;font-weight:900;color:#1a2a5e;line-height:1;}
+.ov-best{font-size:12px;color:#ffd700;margin:4px 0 16px;}
+.ov-sub{font-size:12px;color:rgba(60,80,140,0.7);margin-bottom:16px;line-height:1.8;}
+.ov-stats{display:flex;gap:8px;margin-bottom:16px;width:100%;max-width:260px;}
+.ov-stat{flex:1;background:#fff;border:1px solid rgba(100,130,200,0.2);border-radius:10px;padding:8px 4px;text-align:center;}
+.ov-sv{font-size:18px;font-weight:700;color:#1a2a5e;}
+.ov-sl{font-size:10px;color:rgba(80,100,160,0.5);margin-top:2px;}
+.big-btn{padding:13px 36px;border-radius:50px;border:none;font-size:15px;font-weight:700;
+  cursor:pointer;-webkit-appearance:none;min-width:200px;margin:4px 0;}
+.btn-start{background:linear-gradient(135deg,#2ecc71,#1abc9c);color:#fff;}
+.btn-retry{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;}
+
+#footer{position:fixed;bottom:0;left:0;width:100%;
+  padding:2px 16px max(4px,env(safe-area-inset-bottom));
+  display:flex;justify-content:space-between;pointer-events:none;z-index:5;}
+#footer a{font-size:10px;color:rgba(80,100,160,0.4);text-decoration:none;pointer-events:all;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="top-bar">
+    <div class="score-box"><div class="score-lbl">SCORE</div><div class="score-val" id="score-val">0</div></div>
+    <div class="score-box"><div class="score-lbl">BEST</div><div class="score-val" id="best-val">0</div></div>
+    <div class="score-box"><div class="score-lbl">LENGTH</div><div class="score-val" id="len-val">1</div></div>
+  </div>
+
+  <div id="board-wrap">
+    <canvas id="gc"></canvas>
+    <div id="overlay">
+      <div class="ov-title" id="ov-title">🐍 뱀 키우기</div>
+      <div class="ov-sub" id="ov-sub">먹이를 먹을수록 뱀이 길어집니다<br>벽이나 자신의 몸에 닿으면 게임 오버!<br><span style="font-size:11px;color:rgba(255,255,255,0.3);">PC: 방향키 · 모바일: 버튼 또는 스와이프</span></div>
+      <div class="ov-score" id="ov-score" style="display:none;">0</div>
+      <div class="ov-best" id="ov-best" style="display:none;"></div>
+      <div class="ov-stats" id="ov-stats" style="display:none;">
+        <div class="ov-stat"><div class="ov-sv" id="st-score">0</div><div class="ov-sl">점수</div></div>
+        <div class="ov-stat"><div class="ov-sv" id="st-len">0</div><div class="ov-sl">최대 길이</div></div>
+        <div class="ov-stat"><div class="ov-sv" id="st-food">0</div><div class="ov-sl">먹은 먹이</div></div>
+      </div>
+      <button class="big-btn btn-start" id="btn-start">🐍 시작!</button>
+    </div>
+  </div>
+
+  <div id="bot-bar">
+    <div class="bot-box">속도 <span class="bot-val" id="spd-val">보통</span></div>
+    <div class="bot-box">이동 <span class="bot-val" id="move-val">0</span>회</div>
+    <div class="bot-box">그리드 <span class="bot-val" id="grid-val">20×20</span></div>
+  </div>
+
+  <div id="dpad">
+    <button class="dpad-btn" id="d-up">▲</button>
+    <button class="dpad-btn" id="d-left">◀</button>
+    <button class="dpad-btn" id="d-center">⏸</button>
+    <button class="dpad-btn" id="d-right">▶</button>
+    <div></div>
+    <button class="dpad-btn" id="d-down">▼</button>
+    <div></div>
+  </div>
+</div>
+
+<div id="footer">
+  <a href="https://mindweaver74.github.io/Jutopia">🎮 Jutopia</a>
+  <a href="https://mindweaver74.github.io/Jutopia/privacy.html">개인정보처리방침</a>
+</div>
+
+<script>
+var canvas=document.getElementById('gc');
+var ctx=canvas.getContext('2d');
+var BW=0,BH=0; // 보드 픽셀 크기
+
+// ── 게임 설정 ──
+var COLS=20,ROWS=20;
+var CELL=0; // resize에서 계산
+
+function resize(){
+  var wrap=document.getElementById('board-wrap');
+  var maxW=Math.min(window.innerWidth-24,420);
+  BW=Math.floor(maxW);
+  CELL=Math.floor(BW/COLS);
+  BW=CELL*COLS;BH=CELL*ROWS;
+  canvas.width=BW;canvas.height=BH;
+  canvas.style.width=BW+'px';canvas.style.height=BH+'px';
+  document.getElementById('grid-val').textContent=COLS+'×'+ROWS;
+  if(gameState!=='idle') draw();
+}
+window.addEventListener('resize',resize);
+
+// ── 게임 상태 ──
+var snake,dir,nextDir,food,food2,bonusFood;
+var score,best=+(localStorage.getItem('snkBest')||0);
+var foodEaten,moves,maxLen;
+var gameState='idle'; // idle/playing/paused/over
+var tid=null;
+
+// 속도 단계 (ms)
+var SPEEDS=[200,150,120,100,80];
+var speedIdx=1;
+function getSpeed(){return SPEEDS[speedIdx];}
+function getSpeedName(){return['느림','보통','빠름','매우빠름','초고속'][speedIdx];}
+
+// ── 초기화 ──
+function initGame(){
+  var midX=Math.floor(COLS/2),midY=Math.floor(ROWS/2);
+  snake=[{x:midX,y:midY},{x:midX-1,y:midY},{x:midX-2,y:midY}];
+  dir={x:1,y:0};nextDir={x:1,y:0};
+  score=0;foodEaten=0;moves=0;maxLen=3;
+  bonusFood=null;
+  food=null;food2=null;
+  spawnFood();spawnFood2();
+  document.getElementById('score-val').textContent=0;
+  document.getElementById('best-val').textContent=best;
+  document.getElementById('len-val').textContent=3;
+  document.getElementById('move-val').textContent=0;
+  document.getElementById('spd-val').textContent=getSpeedName();
+}
+
+// ── 먹이 생성 ──
+var FOODS=['🍎','🍊','🍋','🍇','🍓','🍒','🥝','🍌','🫐'];
+function spawnFood(){
+  var empty=[];
+  for(var r=0;r<ROWS;r++) for(var c=0;c<COLS;c++){
+    if(!snake.some(function(s){return s.x===c&&s.y===r;}))
+      empty.push({x:c,y:r});
+  }
+  if(!empty.length)return;
+  food=empty[Math.floor(Math.random()*empty.length)];
+  food.emoji=FOODS[Math.floor(Math.random()*FOODS.length)];
+  food.anim=0;
+}
+function spawnFood2(){
+  // 항상 먹이 2개 유지
+  var empty=[];
+  for(var r=0;r<ROWS;r++) for(var c=0;c<COLS;c++){
+    if(!snake.some(function(s){return s.x===c&&s.y===r;})
+      &&!(food&&food.x===c&&food.y===r))
+      empty.push({x:c,y:r});
+  }
+  if(!empty.length){food2=null;return;}
+  food2=empty[Math.floor(Math.random()*empty.length)];
+  food2.emoji=FOODS[Math.floor(Math.random()*FOODS.length)];
+  food2.anim=Math.PI; // 위상 다르게
+}
+
+function spawnBonus(){
+  var empty=[];
+  for(var r=0;r<ROWS;r++) for(var c=0;c<COLS;c++){
+    if(!snake.some(function(s){return s.x===c&&s.y===r;})&&
+       !(food&&food.x===c&&food.y===r)) empty.push({x:c,y:r});
+  }
+  if(!empty.length)return;
+  bonusFood=empty[Math.floor(Math.random()*empty.length)];
+  bonusFood.emoji='⭐';bonusFood.timer=80;bonusFood.anim=0;
+}
+
+// ── 그리기 ──
+function draw(){
+  if(!CELL)return;
+  // 배경
+  ctx.fillStyle='#f0f4ff';ctx.fillRect(0,0,BW,BH);
+
+  // 격자
+  ctx.strokeStyle='rgba(100,130,200,0.18)';ctx.lineWidth=0.5;
+  for(var c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,BH);ctx.stroke();}
+  for(var r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*CELL);ctx.lineTo(BW,r*CELL);ctx.stroke();}
+
+  // 뱀 몸통
+  snake.forEach(function(seg,i){
+    var ratio=1-i/snake.length*0.45;
+    var isHead=i===0;
+    var x=seg.x*CELL,y=seg.y*CELL;
+    var pad=isHead?1:2;
+    var r2=isHead?CELL*0.3:CELL*0.25;
+
+    // 몸통 색상 (머리→꼬리로 그라디언트)
+    var g=Math.floor(180*ratio+30);
+    ctx.fillStyle=isHead?'#27ae60':'rgba(39,'+(g)+',100,'+ratio+')';
+    ctx.shadowColor=isHead?'rgba(39,174,96,0.6)':'transparent';
+    ctx.shadowBlur=isHead?8:0;
+    ctx.beginPath();ctx.roundRect(x+pad,y+pad,CELL-pad*2,CELL-pad*2,r2);ctx.fill();
+    ctx.shadowBlur=0;
+
+    // 머리 눈
+    if(isHead){
+      var ex1,ey1,ex2,ey2,ep=CELL*0.22;
+      if(dir.x===1){ex1=x+CELL*0.72;ey1=y+CELL*0.28;ex2=x+CELL*0.72;ey2=y+CELL*0.72;}
+      else if(dir.x===-1){ex1=x+CELL*0.28;ey1=y+CELL*0.28;ex2=x+CELL*0.28;ey2=y+CELL*0.72;}
+      else if(dir.y===1){ex1=x+CELL*0.28;ey1=y+CELL*0.72;ex2=x+CELL*0.72;ey2=y+CELL*0.72;}
+      else{ex1=x+CELL*0.28;ey1=y+CELL*0.28;ex2=x+CELL*0.72;ey2=y+CELL*0.28;}
+      ctx.fillStyle='#fff';
+      ctx.beginPath();ctx.arc(ex1,ey1,ep,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(ex2,ey2,ep,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#1a1a2e';
+      ctx.beginPath();ctx.arc(ex1+dir.x*ep*0.4,ey1+dir.y*ep*0.4,ep*0.55,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(ex2+dir.x*ep*0.4,ey2+dir.y*ep*0.4,ep*0.55,0,Math.PI*2);ctx.fill();
+    }
+  });
+
+  // 먹이 그리기 함수
+  function drawFood(f,glowColor){
+    if(!f)return;
+    f.anim=(f.anim||0)+0.06;
+    var fy=f.y*CELL+CELL/2+Math.sin(f.anim)*2;
+    ctx.font=Math.floor(CELL*0.72)+'px Arial';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor=glowColor||'rgba(255,100,100,0.5)';ctx.shadowBlur=10;
+    ctx.fillText(f.emoji,f.x*CELL+CELL/2,fy);
+    ctx.shadowBlur=0;
+  }
+  drawFood(food,'rgba(255,100,100,0.5)');
+  drawFood(food2,'rgba(255,150,50,0.5)');
+
+  // 보너스 먹이
+  if(bonusFood){
+    bonusFood.anim=(bonusFood.anim||0)+0.12;
+    ctx.save();ctx.globalAlpha=0.7+Math.sin(bonusFood.anim)*0.3;
+    ctx.font=Math.floor(CELL*0.8)+'px Arial';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(255,215,0,0.8)';ctx.shadowBlur=15;
+    ctx.fillText(bonusFood.emoji,bonusFood.x*CELL+CELL/2,bonusFood.y*CELL+CELL/2);
+    ctx.shadowBlur=0;ctx.restore();
+    // 타이머 바
+    var tpct=bonusFood.timer/80;
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(bonusFood.x*CELL,bonusFood.y*CELL+CELL-4,CELL,4);
+    ctx.fillStyle='#ffd700';ctx.fillRect(bonusFood.x*CELL,bonusFood.y*CELL+CELL-4,CELL*tpct,4);
+  }
+}
+
+// ── 게임 스텝 ──
+function step(){
+  if(gameState!=='playing')return;
+  dir={x:nextDir.x,y:nextDir.y};
+  var head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  moves++;document.getElementById('move-val').textContent=moves;
+
+  // 벽 충돌
+  if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS){gameOver();return;}
+  // 자기 몸 충돌
+  if(snake.some(function(s){return s.x===head.x&&s.y===head.y;})){gameOver();return;}
+
+  snake.unshift(head);
+  var ate=false;
+
+  // 일반 먹이1
+  if(food&&head.x===food.x&&head.y===food.y){
+    ate=true;foodEaten++;
+    var pts=10+speedIdx*5;
+    score+=pts;
+    if(score>best){best=score;localStorage.setItem('snkBest',best);}
+    document.getElementById('score-val').textContent=score;
+    document.getElementById('best-val').textContent=best;
+    document.getElementById('len-val').textContent=snake.length;
+    if(snake.length>maxLen)maxLen=snake.length;
+    // food2를 food로 승격 후 새 food2 즉시 생성
+    food=food2;
+    spawnFood2();
+    sfxEat();
+    if(foodEaten%5===0&&!bonusFood)spawnBonus();
+    if(foodEaten%10===0&&speedIdx<SPEEDS.length-1){
+      speedIdx++;
+      document.getElementById('spd-val').textContent=getSpeedName();
+      restartTimer();
+    }
+  }
+  // 일반 먹이2
+  if(food2&&head.x===food2.x&&head.y===food2.y){
+    ate=true;foodEaten++;
+    var pts2=10+speedIdx*5;
+    score+=pts2;
+    if(score>best){best=score;localStorage.setItem('snkBest',best);}
+    document.getElementById('score-val').textContent=score;
+    document.getElementById('best-val').textContent=best;
+    document.getElementById('len-val').textContent=snake.length;
+    if(snake.length>maxLen)maxLen=snake.length;
+    spawnFood2();
+    sfxEat();
+    if(foodEaten%5===0&&!bonusFood)spawnBonus();
+    if(foodEaten%10===0&&speedIdx<SPEEDS.length-1){
+      speedIdx++;
+      document.getElementById('spd-val').textContent=getSpeedName();
+      restartTimer();
+    }
+  }
+
+  // 보너스 먹이
+  if(bonusFood){
+    bonusFood.timer--;
+    if(bonusFood.timer<=0)bonusFood=null;
+    else if(head.x===bonusFood.x&&head.y===bonusFood.y){
+      ate=true;score+=50+speedIdx*10;
+      if(score>best){best=score;localStorage.setItem('snkBest',best);}
+      document.getElementById('score-val').textContent=score;
+      document.getElementById('best-val').textContent=best;
+      bonusFood=null;sfxBonus();
+    }
+  }
+
+  if(!ate)snake.pop();
+  document.getElementById('len-val').textContent=snake.length;
+  draw();
+}
+
+function gameOver(){
+  gameState='over';clearInterval(tid);
+  sfxDie();
+  document.getElementById('ov-title').textContent='게임 오버!';
+  document.getElementById('ov-sub').style.display='none';
+  document.getElementById('ov-score').textContent=score;
+  document.getElementById('ov-score').style.display='block';
+  document.getElementById('ov-best').textContent=score>=best&&score>0?'🏆 신기록!':'최고: '+best+'점';
+  document.getElementById('ov-best').style.display='block';
+  document.getElementById('ov-stats').style.display='flex';
+  document.getElementById('st-score').textContent=score;
+  document.getElementById('st-len').textContent=maxLen;
+  document.getElementById('st-food').textContent=foodEaten;
+  document.getElementById('btn-start').textContent='🐍 다시 시작!';
+  document.getElementById('btn-start').className='big-btn btn-retry';
+  document.getElementById('overlay').style.display='flex';
+}
+
+function restartTimer(){
+  clearInterval(tid);
+  tid=setInterval(step,getSpeed());
+}
+
+function startGame(){
+  getSfx();
+  speedIdx=1;
+  initGame();
+  document.getElementById('ov-title').textContent='🐍 뱀 키우기';
+  document.getElementById('ov-sub').style.display='block';
+  document.getElementById('ov-score').style.display='none';
+  document.getElementById('ov-best').style.display='none';
+  document.getElementById('ov-stats').style.display='none';
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('btn-start').textContent='🐍 시작!';
+  document.getElementById('btn-start').className='big-btn btn-start';
+  gameState='playing';
+  restartTimer();
+  draw();
+}
+
+function togglePause(){
+  if(gameState==='playing'){
+    gameState='paused';clearInterval(tid);
+    document.getElementById('d-center').textContent='▶';
+  } else if(gameState==='paused'){
+    gameState='playing';restartTimer();
+    document.getElementById('d-center').textContent='⏸';
+  }
+}
+
+// ── 방향 입력 ──
+function setDir(dx,dy){
+  if(dir.x===-dx&&dir.y===-dy)return; // 역방향 방지
+  nextDir={x:dx,y:dy};
+}
+
+// 키보드
+window.addEventListener('keydown',function(e){
+  // 방향키 스크롤 방지
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(e.key)>=0){
+    e.preventDefault();
+  }
+  if(gameState==='idle'||gameState==='over'){
+    // 게임 시작 전/후: 아무 키로 시작
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Enter'].indexOf(e.key)>=0){
+      startGame();
+      // 방향키면 방향도 바로 적용
+      if(e.key==='ArrowUp')setDir(0,-1);
+      else if(e.key==='ArrowDown')setDir(0,1);
+      else if(e.key==='ArrowLeft')setDir(-1,0);
+      else if(e.key==='ArrowRight')setDir(1,0);
+    }
+    return;
+  }
+  if(e.key==='ArrowUp'||e.key==='w'||e.key==='W')setDir(0,-1);
+  else if(e.key==='ArrowDown'||e.key==='s'||e.key==='S')setDir(0,1);
+  else if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')setDir(-1,0);
+  else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')setDir(1,0);
+  else if(e.key===' '||e.key==='p'||e.key==='P'||e.key==='Escape')togglePause();
+});
+
+// D-패드 버튼
+function bindDpad(id,dx,dy){
+  var el=document.getElementById(id);
+  function fn(){if(gameState==='playing'||gameState==='paused'){setDir(dx,dy);if(gameState==='paused')togglePause();}}
+  el.addEventListener('touchstart',function(e){e.preventDefault();fn();el.classList.add('pressed');},{passive:false});
+  el.addEventListener('touchend',function(e){e.preventDefault();el.classList.remove('pressed');},{passive:false});
+  el.addEventListener('mousedown',function(){fn();el.classList.add('pressed');});
+  el.addEventListener('mouseup',function(){el.classList.remove('pressed');});
+}
+bindDpad('d-up',0,-1);bindDpad('d-down',0,1);
+bindDpad('d-left',-1,0);bindDpad('d-right',1,0);
+document.getElementById('d-center').addEventListener('click',function(){
+  if(gameState==='playing'||gameState==='paused')togglePause();
+});
+
+// 스와이프
+var swX=0,swY=0;
+canvas.addEventListener('touchstart',function(e){
+  e.preventDefault();swX=e.touches[0].clientX;swY=e.touches[0].clientY;
+},{passive:false});
+canvas.addEventListener('touchend',function(e){
+  e.preventDefault();
+  var dx=e.changedTouches[0].clientX-swX;
+  var dy=e.changedTouches[0].clientY-swY;
+  if(Math.abs(dx)>Math.abs(dy)){if(dx>20)setDir(1,0);else if(dx<-20)setDir(-1,0);}
+  else{if(dy>20)setDir(0,1);else if(dy<-20)setDir(0,-1);}
+},{passive:false});
+
+// 시작 버튼
+var startBtn=document.getElementById('btn-start');
+startBtn.addEventListener('click',startGame);
+startBtn.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();startGame();},{passive:false});
+
+// ── 효과음 ──
+var sfxCtx=null;
+function getSfx(){if(!sfxCtx)try{sfxCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}if(sfxCtx&&sfxCtx.state==='suspended')sfxCtx.resume();return sfxCtx;}
+function tone(f1,f2,dur,vol,type){var a=getSfx();if(!a)return;try{var t=a.currentTime;var o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type=type||'sine';o.frequency.setValueAtTime(f1,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.start(t);o.stop(t+dur+0.01);}catch(e){}}
+function sfxEat(){tone(400,600,0.08,0.1,'sine');}
+function sfxBonus(){[600,800,1000].forEach(function(f,i){setTimeout(function(){tone(f,f*1.1,0.1,0.12,'sine');},i*50);});}
+function sfxDie(){[300,200,150].forEach(function(f,i){setTimeout(function(){tone(f,f*0.7,0.18,0.15,'sawtooth');},i*80);});}
+
+// ── 초기화 ──
+document.getElementById('best-val').textContent=best;
+resize();
+// 초기 격자 그리기
+ctx.fillStyle='#f0f4ff';ctx.fillRect(0,0,BW,BH);
+ctx.strokeStyle='rgba(100,130,200,0.18)';ctx.lineWidth=0.5;
+for(var c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,BH);ctx.stroke();}
+for(var r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*CELL);ctx.lineTo(BW,r*CELL);ctx.stroke();}
+</script>
+</body>
+</html>
